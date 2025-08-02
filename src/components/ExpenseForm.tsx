@@ -4,6 +4,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 interface Props {
   onAddExpense: (expense: {
@@ -59,8 +60,10 @@ export default function ExpenseForm({ onAddExpense }: Props) {
       setAmount("")
       setPaid(false)
       setShowForm(false)
+      toast.success('Gasto agregado correctamente')
     } catch (error) {
       console.error("Error adding expense:", error)
+      toast.error('Error al agregar el gasto')
     } finally {
       setLoading(false)
     }
