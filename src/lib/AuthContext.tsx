@@ -14,16 +14,18 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   User,
-  AuthError
+  AuthError,
+  UserCredential
 } from "firebase/auth"
 import { auth } from "./firebase"
 
 type AuthContextType = {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<UserCredential>
+  register: (email: string, password: string) => Promise<UserCredential>
   logout: () => Promise<void>
   loading: boolean
+  error: string | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -42,61 +44,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const authOperation = async <T,>(
+    operation: () => Promise<T>,
+    errorHandler: (error: AuthError) => string
+  ): Promise<T> => {
     setLoading(true)
     setError(null)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      return await operation()
     } catch (error) {
       const authError = error as AuthError
-      let errorMessage = "Error al iniciar sesión"
-      switch (authError.code) {
-        case "auth/invalid-email":
-          errorMessage = "Email inválido"
-          break
-        case "auth/user-disabled":
-          errorMessage = "Usuario deshabilitado"
-          break
-        case "auth/user-not-found":
-          errorMessage = "Usuario no encontrado"
-          break
-        case "auth/wrong-password":
-          errorMessage = "Contraseña incorrecta"
-          break
-        default:
-          errorMessage = "Error al iniciar sesión"
-      }
+      const errorMessage = errorHandler(authError)
+      setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
-  const register = async (email: string, password: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      await createUserWithEmailAndPassword(auth, email, password)
-    } catch (error) {
-      const authError = error as AuthError
-      let errorMessage = "Error al registrar"
-      switch (authError.code) {
-        case "auth/email-already-in-use":
-          errorMessage = "Email ya registrado"
-          break
-        case "auth/invalid-email":
-          errorMessage = "Email inválido"
-          break
-        case "auth/weak-password":
-          errorMessage = "Contraseña débil (mínimo 6 caracteres)"
-          break
-        default:
-          errorMessage = "Error al registrar"
+  const login = (email: string, password: string) => {
+    return authOperation(
+      () => signInWithEmailAndPassword(auth, email, password),
+      (authError) => {
+        switch (authError.code) {
+          case "auth/invalid-email": return "Email inválido"
+          case "auth/user-disabled": return "Usuario deshabilitado"
+          case "auth/user-not-found": return "Usuario no encontrado"
+          case "auth/wrong-password": return "Contraseña incorrecta"
+          default: return "Error al iniciar sesión"
+        }
       }
-      throw new Error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
+    )
+  }
+
+  const register = (email: string, password: string) => {
+    return authOperation(
+      () => createUserWithEmailAndPassword(auth, email, password),
+      (authError) => {
+        switch (authError.code) {
+          case "auth/email-already-in-use": return "Email ya registrado"
+          case "auth/invalid-email": return "Email inválido"
+          case "auth/weak-password": return "Contraseña débil (mínimo 6 caracteres)"
+          default: return "Error al registrar"
+        }
+      }
+    )
   }
 
   const logout = async () => {
@@ -109,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, error }}>
       {children}
     </AuthContext.Provider>
   )

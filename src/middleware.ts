@@ -1,24 +1,24 @@
 // src/middleware.ts
-import { NextResponse } from "next/server"
-import { auth } from "@/lib/firebase-admin"
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "./lib/firebase-admin";
 
-export async function middleware(request: Request) {
-  const session = request.cookies.get('session')?.value
-  const { pathname } = new URL(request.url)
+export async function middleware(request: NextRequest) {
+  const protectedPaths = ["/dashboard", "/settings"];
+  const { pathname } = request.nextUrl;
 
-  // Rutas protegidas
-  const protectedRoutes = ['/dashboard']
+  if (protectedPaths.some(path => pathname.startsWith(path))) {
+    const sessionCookie = request.cookies.get("session")?.value;
 
-  try {
-    if (protectedRoutes.some(route => pathname.startsWith(route))) {
-      if (!session) {
-        return NextResponse.redirect(new URL('/login', request.url))
-      }
-
-      await auth.verifySessionCookie(session, true)
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
-    return NextResponse.next()
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url))
+
+    try {
+      await auth.verifySessionCookie(sessionCookie, true);
+    } catch (error) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
+
+  return NextResponse.next();
 }
