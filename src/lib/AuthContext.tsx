@@ -1,107 +1,117 @@
 // src/lib/AuthContext.tsx
 "use client"
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode
-} from "react"
+import { createContext, useContext, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  User,
-  AuthError,
-  UserCredential
-} from "firebase/auth"
-import { auth } from "./firebase"
+  User as FirebaseUser,
+  AuthError
+} from 'firebase/auth'
+import { auth } from './firebase'
 
-type AuthContextType = {
-  user: User | null
-  login: (email: string, password: string) => Promise<UserCredential>
-  register: (email: string, password: string) => Promise<UserCredential>
-  logout: () => Promise<void>
+interface AuthContextType {
+  user: FirebaseUser | null
   loading: boolean
   error: string | null
+  login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string) => Promise<void>
+  logout: () => Promise<void>
+  clearError: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<FirebaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
       setLoading(false)
+      // Persistencia opcional para datos específicos
+      if (user) {
+        localStorage.setItem('user', JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName
+        }))
+      } else {
+        localStorage.removeItem('user')
+      }
     })
 
     return () => unsubscribe()
   }, [])
 
-  const authOperation = async <T,>(
-    operation: () => Promise<T>,
-    errorHandler: (error: AuthError) => string
-  ): Promise<T> => {
+  const handleAuthError = (error: AuthError): string => {
+    switch (error.code) {
+      case 'auth/invalid-email': return 'Email inválido'
+      case 'auth/user-disabled': return 'Usuario deshabilitado'
+      case 'auth/user-not-found': return 'Usuario no encontrado'
+      case 'auth/wrong-password': return 'Contraseña incorrecta'
+      case 'auth/email-already-in-use': return 'Email ya registrado'
+      case 'auth/weak-password': return 'Contraseña débil (mínimo 6 caracteres)'
+      default: return 'Error de autenticación'
+    }
+  }
+
+  const login = async (email: string, password: string) => {
     setLoading(true)
     setError(null)
     try {
-      return await operation()
+      await signInWithEmailAndPassword(auth, email, password)
+      toast.success('Sesión iniciada correctamente')
+      router.push('/dashboard')
     } catch (error) {
-      const authError = error as AuthError
-      const errorMessage = errorHandler(authError)
+      const errorMessage = handleAuthError(error as AuthError)
       setError(errorMessage)
+      toast.error(errorMessage)
       throw new Error(errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
-  const login = (email: string, password: string) => {
-    return authOperation(
-      () => signInWithEmailAndPassword(auth, email, password),
-      (authError) => {
-        switch (authError.code) {
-          case "auth/invalid-email": return "Email inválido"
-          case "auth/user-disabled": return "Usuario deshabilitado"
-          case "auth/user-not-found": return "Usuario no encontrado"
-          case "auth/wrong-password": return "Contraseña incorrecta"
-          default: return "Error al iniciar sesión"
-        }
-      }
-    )
-  }
-
-  const register = (email: string, password: string) => {
-    return authOperation(
-      () => createUserWithEmailAndPassword(auth, email, password),
-      (authError) => {
-        switch (authError.code) {
-          case "auth/email-already-in-use": return "Email ya registrado"
-          case "auth/invalid-email": return "Email inválido"
-          case "auth/weak-password": return "Contraseña débil (mínimo 6 caracteres)"
-          default: return "Error al registrar"
-        }
-      }
-    )
+  const register = async (email: string, password: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await createUserWithEmailAndPassword(auth, email, password)
+      toast.success('Cuenta creada correctamente')
+      router.push('/dashboard')
+    } catch (error) {
+      const errorMessage = handleAuthError(error as AuthError)
+      setError(errorMessage)
+      toast.error(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const logout = async () => {
     try {
       await signOut(auth)
+      toast.success('Sesión cerrada correctamente')
+      router.push('/')
     } catch (error) {
-      console.error("Error al cerrar sesión:", error)
-      throw new Error("Error al cerrar sesión")
+      toast.error('Error al cerrar sesión')
+      throw error
     }
   }
 
+  const clearError = () => setError(null)
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, error }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   )
@@ -109,8 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error("useAuth debe usarse dentro de un AuthProvider")
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
 }
