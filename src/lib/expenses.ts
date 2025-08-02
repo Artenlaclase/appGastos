@@ -1,3 +1,4 @@
+// src/lib/expenses.ts 
 import {
   collection,
   addDoc,
@@ -9,9 +10,28 @@ import {
   orderBy,
   getDocs,
   Timestamp,
-} from "firebase/firestore"
-import { db } from "./firebase"
-import type { Expense, Income, MonthlySummary } from "@/types"
+} from "firebase/firestore";
+import { db } from "./firebase";
+import type { Expense, Income, MonthlySummary } from "@/types";
+
+// Configuración común para consultas
+const createQuery = (collectionName: "incomes" | "expenses", userId: string, month?: string) => {
+  const baseQuery = query(
+    collection(db, collectionName),
+    where("userId", "==", userId),
+    orderBy("date", "desc")
+  );
+
+  if (month) {
+    return query(
+      collection(db, collectionName),
+      where("userId", "==", userId),
+      where("month", "==", month),
+      orderBy("date", "desc")
+    );
+  }
+  return baseQuery;
+};
 
 // Income functions
 export const addIncome = async (income: Omit<Income, "id">) => {
@@ -19,38 +39,29 @@ export const addIncome = async (income: Omit<Income, "id">) => {
     const docRef = await addDoc(collection(db, "incomes"), {
       ...income,
       date: Timestamp.fromDate(income.date),
-    })
-    return docRef.id
+    });
+    return docRef.id;
   } catch (error) {
-    console.error("Error adding income:", error)
-    throw error
+    console.error("Error adding income:", error);
+    throw error;
   }
-}
+};
 
 export const getIncomes = async (userId: string, month?: string): Promise<Income[]> => {
   try {
-    let q = query(collection(db, "incomes"), where("userId", "==", userId), orderBy("date", "desc"))
-
-    if (month) {
-      q = query(
-        collection(db, "incomes"),
-        where("userId", "==", userId),
-        where("month", "==", month),
-        orderBy("date", "desc"),
-      )
-    }
-
-    const querySnapshot = await getDocs(q)
+    const q = createQuery("incomes", userId, month);
+    const querySnapshot = await getDocs(q);
+    
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       date: doc.data().date.toDate(),
-    })) as Income[]
+    })) as Income[];
   } catch (error) {
-    console.error("Error getting incomes:", error)
-    throw error
+    console.error("Error getting incomes:", error);
+    throw error;
   }
-}
+};
 
 // Expense functions
 export const addExpense = async (expense: Omit<Expense, "id">) => {
@@ -58,38 +69,29 @@ export const addExpense = async (expense: Omit<Expense, "id">) => {
     const docRef = await addDoc(collection(db, "expenses"), {
       ...expense,
       date: Timestamp.fromDate(expense.date),
-    })
-    return docRef.id
+    });
+    return docRef.id;
   } catch (error) {
-    console.error("Error adding expense:", error)
-    throw error
+    console.error("Error adding expense:", error);
+    throw error;
   }
-}
+};
 
 export const getExpenses = async (userId: string, month?: string): Promise<Expense[]> => {
   try {
-    let q = query(collection(db, "expenses"), where("userId", "==", userId), orderBy("date", "desc"))
-
-    if (month) {
-      q = query(
-        collection(db, "expenses"),
-        where("userId", "==", userId),
-        where("month", "==", month),
-        orderBy("date", "desc"),
-      )
-    }
-
-    const querySnapshot = await getDocs(q)
+    const q = createQuery("expenses", userId, month);
+    const querySnapshot = await getDocs(q);
+    
     return querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
       date: doc.data().date.toDate(),
-    })) as Expense[]
+    })) as Expense[];
   } catch (error) {
-    console.error("Error getting expenses:", error)
-    throw error
+    console.error("Error getting expenses:", error);
+    throw error;
   }
-}
+};
 
 export const markExpenseAsPaid = async (expenseId: string, paid: boolean) => {
   try {
