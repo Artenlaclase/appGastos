@@ -1,14 +1,15 @@
+// src/components/BalanceSummary.tsx
 "use client"
 
-import type { ResumenMensual } from "@/types"
+import type { MonthlySummary } from "@/types"
 import { TrendingUp, TrendingDown, DollarSign, Percent } from "lucide-react"
 
 interface Props {
-  resumen: ResumenMensual | null
+  summary: MonthlySummary | null
   loading: boolean
 }
 
-export default function ResumenSaldo({ resumen, loading }: Props) {
+export default function BalanceSummary({ summary, loading }: Props) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -22,7 +23,7 @@ export default function ResumenSaldo({ resumen, loading }: Props) {
     )
   }
 
-  if (!resumen) return null
+  if (!summary) return null
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("es-CL", {
@@ -37,8 +38,8 @@ export default function ResumenSaldo({ resumen, loading }: Props) {
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Ingresos</p>
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(resumen.totalIngresos)}</p>
+            <p className="text-sm font-medium text-gray-600">Total Income</p>
+            <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalIncome)}</p>
           </div>
           <TrendingUp className="h-8 w-8 text-green-600" />
         </div>
@@ -47,8 +48,8 @@ export default function ResumenSaldo({ resumen, loading }: Props) {
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Total Gastos</p>
-            <p className="text-2xl font-bold text-red-600">{formatCurrency(resumen.totalGastos)}</p>
+            <p className="text-sm font-medium text-gray-600">Total Expenses</p>
+            <p className="text-2xl font-bold text-red-600">{formatCurrency(summary.totalExpenses)}</p>
           </div>
           <TrendingDown className="h-8 w-8 text-red-600" />
         </div>
@@ -57,20 +58,20 @@ export default function ResumenSaldo({ resumen, loading }: Props) {
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Disponible</p>
-            <p className={`text-2xl font-bold ${resumen.disponible >= 0 ? "text-green-600" : "text-red-600"}`}>
-              {formatCurrency(resumen.disponible)}
+            <p className="text-sm font-medium text-gray-600">Available</p>
+            <p className={`text-2xl font-bold ${summary.available >= 0 ? "text-green-600" : "text-red-600"}`}>
+              {formatCurrency(summary.available)}
             </p>
           </div>
-          <DollarSign className={`h-8 w-8 ${resumen.disponible >= 0 ? "text-green-600" : "text-red-600"}`} />
+          <DollarSign className={`h-8 w-8 ${summary.available >= 0 ? "text-green-600" : "text-red-600"}`} />
         </div>
       </div>
 
       <div className="card">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">% Gastado</p>
-            <p className="text-2xl font-bold text-blue-600">{resumen.porcentajeGastado.toFixed(1)}%</p>
+            <p className="text-sm font-medium text-gray-600">% Spent</p>
+            <p className="text-2xl font-bold text-blue-600">{summary.spentPercentage.toFixed(1)}%</p>
           </div>
           <Percent className="h-8 w-8 text-blue-600" />
         </div>
