@@ -14,14 +14,13 @@ import {
 import { db } from "./firebase";
 import type { Expense, Income, MonthlySummary } from "@/types";
 
-// Helpers
+// Helper functions
 const formatMonth = (date: Date) => date.toISOString().slice(0, 7);
 
 function getUserCollectionPath(userId: string, collectionName: "incomes" | "expenses"): string {
   return `users/${userId}/${collectionName}`;
 }
 
-// Query Builder
 const createQuery = (collectionName: "incomes" | "expenses", userId: string, month?: string) => {
   const path = getUserCollectionPath(userId, collectionName);
   const baseQuery = query(
@@ -33,22 +32,25 @@ const createQuery = (collectionName: "incomes" | "expenses", userId: string, mon
 };
 
 // Income Operations
-export const addIncome = async (userId: string, income: Omit<Income, "id" | "month">): Promise<string> => {
+export const addIncome = async (income: Omit<Income, "id">): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, getUserCollectionPath(userId, "incomes")), {
+    if (!income.userId) throw new Error("User ID is required");
+    
+    const docRef = await addDoc(collection(db, getUserCollectionPath(income.userId, "incomes")), {
       ...income,
-      userId,
       date: Timestamp.fromDate(income.date),
       month: formatMonth(income.date),
     });
     return docRef.id;
   } catch (error) {
     console.error("Error adding income:", error);
-    throw error;
+    throw new Error("Failed to add income");
   }
 };
 
 export const getIncomes = async (userId: string, month?: string): Promise<Income[]> => {
+  if (!userId) throw new Error("User ID is required");
+
   try {
     const q = createQuery("incomes", userId, month);
     const snapshot = await getDocs(q);
@@ -67,28 +69,31 @@ export const getIncomes = async (userId: string, month?: string): Promise<Income
     });
   } catch (error) {
     console.error("Error getting incomes:", error);
-    throw error;
+    throw new Error("Failed to get incomes");
   }
 };
 
 // Expense Operations
-export const addExpense = async (userId: string, expense: Omit<Expense, "id" | "month" | "paid">): Promise<string> => {
+export const addExpense = async (expense: Omit<Expense, "id">): Promise<string> => {
   try {
-    const docRef = await addDoc(collection(db, getUserCollectionPath(userId, "expenses")), {
+    if (!expense.userId) throw new Error("User ID is required");
+
+    const docRef = await addDoc(collection(db, getUserCollectionPath(expense.userId, "expenses")), {
       ...expense,
-      userId,
-      paid: false, // Default value
+      paid: expense.paid || false,
       date: Timestamp.fromDate(expense.date),
       month: formatMonth(expense.date),
     });
     return docRef.id;
   } catch (error) {
     console.error("Error adding expense:", error);
-    throw error;
+    throw new Error("Failed to add expense");
   }
 };
 
 export const getExpenses = async (userId: string, month?: string): Promise<Expense[]> => {
+  if (!userId) throw new Error("User ID is required");
+
   try {
     const q = createQuery("expenses", userId, month);
     const snapshot = await getDocs(q);
@@ -109,26 +114,53 @@ export const getExpenses = async (userId: string, month?: string): Promise<Expen
     });
   } catch (error) {
     console.error("Error getting expenses:", error);
-    throw error;
+    throw new Error("Failed to get expenses");
   }
 };
 
-export const updateExpense = async (userId: string, expenseId: string, updates: Partial<Expense>): Promise<void> => {
+export const updateExpense = async (
+  expenseId: string, 
+  updates: Partial<Omit<Expense, "id" | "userId">>,
+  userId: string
+): Promise<void> => {
   try {
+    if (!userId) throw new Error("User ID is required");
+    if (!expenseId) throw new Error("Expense ID is required");
+
     const expenseRef = doc(db, getUserCollectionPath(userId, "expenses"), expenseId);
     await updateDoc(expenseRef, updates);
   } catch (error) {
     console.error("Error updating expense:", error);
-    throw error;
+    throw new Error("Failed to update expense");
   }
 };
 
-export const deleteExpense = async (userId: string, expenseId: string): Promise<void> => {
+export const updateExpensePaidStatus = async (
+  expenseId: string, 
+  paid: boolean,
+  userId: string
+): Promise<void> => {
   try {
+    if (!userId) throw new Error("User ID is required");
+    if (!expenseId) throw new Error("Expense ID is required");
+
+    const expenseRef = doc(db, getUserCollectionPath(userId, "expenses"), expenseId);
+    await updateDoc(expenseRef, { paid });
+  } catch (error) {
+    console.error("Error updating expense paid status:", error);
+    throw new Error("Failed to update expense status");
+  }
+};
+
+
+export const deleteExpense = async (expenseId: string, userId: string): Promise<void> => {
+  try {
+    if (!userId) throw new Error("User ID is required");
+    
     await deleteDoc(doc(db, getUserCollectionPath(userId, "expenses"), expenseId));
   } catch (error) {
     console.error("Error deleting expense:", error);
-    throw error;
+    throw new Error("Failed to delete expense");
   }
 };
 
@@ -143,9 +175,9 @@ export const calculateMonthlySummary = (
     .filter(expense => expense.paid)
     .reduce((sum, expense) => sum + expense.amount, 0);
 
-  const available = totalIncome - totalPaidExpenses;
+  const available = totalIncome - totalExpenses; // Changed from totalPaidExpenses to totalExpenses
   const spentPercentage = totalIncome > 0 
-    ? (totalPaidExpenses / totalIncome) * 100 
+    ? (totalExpenses / totalIncome) * 100 
     : 0;
 
   return {
@@ -158,20 +190,28 @@ export const calculateMonthlySummary = (
   };
 };
 
-// Additional Utility Functions
+// Combined Data Fetching
 export const getMonthlyData = async (userId: string, month: string): Promise<{
   incomes: Income[];
   expenses: Expense[];
   summary: MonthlySummary;
 }> => {
-  const [incomes, expenses] = await Promise.all([
-    getIncomes(userId, month),
-    getExpenses(userId, month),
-  ]);
-  
-  return {
-    incomes,
-    expenses,
-    summary: calculateMonthlySummary(incomes, expenses),
-  };
+  if (!userId) throw new Error("User ID is required");
+  if (!month) throw new Error("Month is required");
+
+  try {
+    const [incomes, expenses] = await Promise.all([
+      getIncomes(userId, month),
+      getExpenses(userId, month),
+    ]);
+    
+    return {
+      incomes,
+      expenses,
+      summary: calculateMonthlySummary(incomes, expenses),
+    };
+  } catch (error) {
+    console.error("Error getting monthly data:", error);
+    throw new Error("Failed to get monthly data");
+  }
 };

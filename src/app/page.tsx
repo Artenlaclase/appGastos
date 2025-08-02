@@ -12,7 +12,6 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
-    // Redirigir al dashboard si el usuario está autenticado
     if (user && !loading) {
       router.push('/dashboard')
     }
@@ -26,7 +25,6 @@ export default function Home() {
     )
   }
 
-  // Mostrar el formulario de login si no hay usuario
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <LoginForm />
