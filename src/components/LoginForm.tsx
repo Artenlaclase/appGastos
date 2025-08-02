@@ -11,14 +11,12 @@ export default function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const { login, register } = useAuth()
+  const { login, register, loading } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
 
     try {
@@ -29,8 +27,6 @@ export default function LoginForm() {
       }
     } catch (error: any) {
       setError(error.message || "Ocurrió un error. Por favor intenta nuevamente.")
-    } finally {
-      setLoading(false)
     }
   }
 
