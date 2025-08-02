@@ -2,13 +2,14 @@
 import { ReactNode } from "react"
 import Navigation from "@/components/Navigation"
 import Header from "@/components/Header"
-import { useAuth } from "@/lib/AuthContext"
 import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
+import { verifySession } from "@/lib/auth" // Necesitarás implementar esto
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth()
-
-  if (!loading && !user) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  const session = await verifySession(cookies())
+  
+  if (!session) {
     redirect('/')
   }
 
