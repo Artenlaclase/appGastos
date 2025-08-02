@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "../lib/AuthContext"
-import { Toaster } from "../components/ui/toaster" // Asegúrate que este es el componente correcto
+import { Toaster } from "../components/ui/toaster"
 import { ThemeProvider } from "../components/theme-provider"
 
 const inter = Inter({ 
@@ -18,10 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Gastos App",
   },
   description: "Aplicación para gestionar tus ingresos y gastos personales",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f9fafb" },
-    { media: "(prefers-color-scheme: dark)", color: "#111827" },
-  ],
+  // themeColor movido a viewport.ts según las mejores prácticas de Next.js
 }
 
 export default function RootLayout({
@@ -44,7 +41,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster /> {/* Componente sin props - la configuración va dentro del componente */}
+            <Toaster />
           </ThemeProvider>
         </AuthProvider>
       </body>
