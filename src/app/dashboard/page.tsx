@@ -8,9 +8,12 @@ import BalanceSummary from "@/components/BalanceSummary"
 import IncomeForm from "@/components/IncomeForm"
 import ExpenseForm from "@/components/ExpenseForm"
 import ExpenseItem from "@/components/ExpenseItem"
-import { useExpenses } from "@/hooks/useExpenses"
+// If your hook is at src/hooks/useExpenses.ts, ensure the file exists.
+// If the file is named differently or in another folder, update the import path accordingly.
+// Example for a common structure:
+import { useExpenses } from "../../hooks/useExpenses"
 import { Calendar } from "lucide-react"
-import type { Expense } from "@/types/expense" // Adjust path if needed
+import type { Expense } from "@/types" // Adjust path if needed
 import { Income } from "@/types"
 
 export default function Dashboard() {
