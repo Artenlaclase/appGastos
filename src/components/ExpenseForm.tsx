@@ -71,7 +71,7 @@ export default function ExpenseForm({ onAddExpense }: Props) {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Expenses</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Expenses</h3>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary flex items-center space-x-2">
           <Plus className="h-4 w-4" />
           <span>Add Expense</span>
