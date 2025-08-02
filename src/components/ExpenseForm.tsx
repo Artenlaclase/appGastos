@@ -5,20 +5,13 @@ import type React from "react"
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
+import type { Expense } from "@/types"
 
 interface Props {
-  onAddExpense: (expense: {
-    type: "fixed" | "variable"
-    category: string
-    description: string
-    amount: number
-    paid: boolean
-    date: Date
-    month: string
-  }) => Promise<void>
+  onAddExpense: (expense: Omit<Expense, "id" | "userId">) => Promise<void>
 }
 
-const categories = [
+const categories: Expense["category"][] = [
   "Housing",
   "Transportation", 
   "Food",
@@ -27,13 +20,15 @@ const categories = [
   "Health",
   "Education",
   "Clothing",
+  "Savings",
+  "Investments",
   "Others",
 ]
 
 export default function ExpenseForm({ onAddExpense }: Props) {
   const [showForm, setShowForm] = useState(false)
-  const [type, setType] = useState<"fixed" | "variable">("variable")
-  const [category, setCategory] = useState("Others")
+  const [type, setType] = useState<Expense["type"]>("variable")
+  const [category, setCategory] = useState<Expense["category"]>("Others")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
   const [paid, setPaid] = useState(false)
@@ -53,7 +48,7 @@ export default function ExpenseForm({ onAddExpense }: Props) {
         amount: Number.parseFloat(amount),
         paid,
         date,
-        month: date.toISOString().slice(0, 7),
+        month: date.toISOString().slice(0, 7) as `${number}-${number}`,
       })
 
       setDescription("")
@@ -89,7 +84,7 @@ export default function ExpenseForm({ onAddExpense }: Props) {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as "fixed" | "variable")}
+                onChange={(e) => setType(e.target.value as Expense["type"])}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="fixed">Fixed Expense</option>
@@ -101,7 +96,7 @@ export default function ExpenseForm({ onAddExpense }: Props) {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
               <select 
                 value={category} 
-                onChange={(e) => setCategory(e.target.value)} 
+                onChange={(e) => setCategory(e.target.value as Expense["category"])} 
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {categories.map((cat) => (
