@@ -37,7 +37,7 @@ export default function Header() {
   }
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-64 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 transition-all duration-300">
+   <header className="fixed top-0 right-0 left-64 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 transition-all duration-300">
       <div className="px-6 py-3 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />

@@ -16,7 +16,7 @@ export default function Navigation() {
   ]
 
   return (
-    <nav className="bg-white shadow-sm border-r border-gray-200 fixed h-full w-64">
+     <nav className="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-800 shadow-sm border-r border-gray-200 dark:border-gray-700">
       <div className="p-4 flex items-center space-x-2">
         <DollarSign className="h-8 w-8 text-blue-600" />
         <h1 className="text-xl font-bold text-gray-900">Gastos App</h1>
