@@ -1,4 +1,5 @@
 // src/dashboard/page.tsx
+
 "use client"
 
 import { useState } from "react"
@@ -12,10 +13,19 @@ import type { Expense } from "@/types"
 import { Income } from "@/types"
 
 export default function Dashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [selectedMonth, setSelectedMonth] = useState<`${number}-${number}`>(
+    new Date().toISOString().slice(0, 7) as `${number}-${number}`
+  )
 
-  const { expenses, incomes, summary, loading, addNewExpense, addNewIncome, toggleExpensePaid } =
-    useExpenses(selectedMonth)
+  const {
+    expenses,
+    incomes,
+    summary,
+    loading,
+    addNewExpense,
+    addNewIncome,
+    toggleExpensePaid,
+  } = useExpenses(selectedMonth)
 
   const formatMonth = (monthString: string) => {
     const date = new Date(monthString + "-01")
@@ -42,7 +52,9 @@ export default function Dashboard() {
                 type="month"
                 id="month"
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) =>
+                  setSelectedMonth(e.target.value as `${number}-${number}`)
+                }
                 className="input-field w-auto dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
               <span className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
@@ -52,14 +64,21 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Financial summary - destacado */}
+        {/* Financial summary */}
         <BalanceSummary summary={summary} loading={loading} />
 
         {/* Forms section */}
         <section className="mb-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Add Transactions</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <IncomeForm onAddIncome={addNewIncome} />
+            <IncomeForm
+              onAddIncome={(income) =>
+                addNewIncome({
+                  ...income,
+                  month: selectedMonth,
+                })
+              }
+            />
             <ExpenseForm onAddExpense={addNewExpense} />
           </div>
         </section>
@@ -72,7 +91,7 @@ export default function Dashboard() {
                 Monthly Expenses ({expenses.length})
               </h3>
             </div>
-            
+
             <div className="p-6">
               {loading ? (
                 <div className="space-y-4">
@@ -91,7 +110,11 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {expenses.map((expense: Expense) => (
-                    <ExpenseItem key={expense.id} expense={expense} onTogglePaid={toggleExpensePaid} />
+                    <ExpenseItem
+                      key={expense.id}
+                      expense={expense}
+                      onTogglePaid={toggleExpensePaid}
+                    />
                   ))}
                 </div>
               )}
@@ -108,17 +131,19 @@ export default function Dashboard() {
                   Monthly Income ({incomes.length})
                 </h3>
               </div>
-              
+
               <div className="p-6">
                 <div className="space-y-3">
                   {incomes.map((income: Income) => (
-                    <div 
-                      key={income.id} 
+                    <div
+                      key={income.id}
                       className="border rounded-lg p-4 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium text-gray-900 dark:text-white">{income.description}</h4>
+                          <h4 className="font-medium text-gray-900 dark:text-white">
+                            {income.description}
+                          </h4>
                           <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-1">
                             <span className="capitalize">{income.type}</span>
                             <span>•</span>
