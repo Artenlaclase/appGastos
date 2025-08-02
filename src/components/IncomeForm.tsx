@@ -1,4 +1,4 @@
-// src/componets/IcomeForm.tsx
+// src/componets/IncomeForm.tsx
 "use client"
 
 import type React from "react"
