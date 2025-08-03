@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithEmailAndPassword(auth, email, password)
       toast.success('Sesión iniciada correctamente')
-      router.push('/dashboard')
+     
     } catch (error) {
       const errorMessage = handleAuthError(error as AuthError)
       setError(errorMessage)

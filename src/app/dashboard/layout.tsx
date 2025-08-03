@@ -1,15 +1,29 @@
 // src/app/dashboard/layout.tsx
-import { ReactNode } from "react"
+"use client"
+
+import { ReactNode, useEffect } from "react"
+import { useAuth } from "@/lib/AuthContext"
+import { useRouter } from "next/navigation"
 import Navigation from "@/components/Navigation"
 import Header from "@/components/Header"
-import { redirect } from "next/navigation"
-import { verifySession } from "@/lib/auth"
+import { Loader2 } from "lucide-react"
 
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const session = await verifySession()
-  
-  if (!session) {
-    redirect('/login')
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login")
+    }
+  }, [user, loading, router])
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Loader2 className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400" />
+      </div>
+    )
   }
 
   return (
