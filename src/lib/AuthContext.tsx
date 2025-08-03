@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("AuthContext | onAuthStateChanged fired | user:", user);
       setUser(user)
       setLoading(false)
       // Persistencia opcional para datos específicos

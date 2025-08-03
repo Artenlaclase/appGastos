@@ -12,9 +12,11 @@ export default function Home() {
   const router = useRouter()
 
   useEffect(() => {
+     console.log("Home useEffect | user:", user, "loading:", loading);
     // Redirige al dashboard si el usuario está autenticado y la verificación ha terminado
     // Usa replace para evitar que el usuario navegue de vuelta con el botón "atrás"
     if (!loading && user) {
+       console.log("Home useEffect | user:", user, "loading:", loading);
       router.replace('/dashboard')
     }
   }, [user, loading, router])

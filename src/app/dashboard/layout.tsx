@@ -1,6 +1,5 @@
 // src/app/dashboard/layout.tsx
 "use client"
-
 import { ReactNode, useEffect } from "react"
 import { useAuth } from "@/lib/AuthContext"
 import { useRouter } from "next/navigation"
@@ -12,7 +11,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   const router = useRouter()
 
+  console.log("DASHBOARD user:", user, "loading:", loading);
+
   useEffect(() => {
+    console.log("DASHBOARD useEffect user:", user, "loading:", loading);
     if (!loading && !user) {
       router.replace("/login")
     }
